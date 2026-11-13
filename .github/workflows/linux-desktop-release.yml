@@ -3,12 +3,21 @@ name: Linux Desktop release
 on:
   push:
     tags: ['linux-desktop-v*']
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing Linux Desktop release tag
+        required: true
+        type: string
+
+env:
+  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
 
 permissions:
   contents: read
 
 concurrency:
-  group: linux-desktop-release-${{ github.ref }}
+  group: linux-desktop-release-${{ inputs.release_tag || github.ref_name }}
 
 jobs:
   package:
@@ -21,6 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
         with:
+          ref: refs/tags/${{ env.RELEASE_TAG }}
           persist-credentials: false
 
       - uses: pnpm/action-setup@v5.0.0
@@ -34,7 +44,7 @@ jobs:
         id: version
         run: |
           version=$(node -p 'require("./apps/desktop/package.json").version')
-          test "$GITHUB_REF_NAME" = "linux-desktop-v$version"
+          test "$RELEASE_TAG" = "linux-desktop-v$version"
           printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
 
       - name: Install Linux build dependencies
@@ -97,7 +107,7 @@ jobs:
           if [[ "$VERSION" == *-* ]]; then
             flags+=(--prerelease)
           fi
-          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag \
+          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
             --title "DeepSeek Harness Desktop $VERSION for Linux" \
             --notes "Unsigned Linux x86_64 desktop packages for DeepSeek Harness $VERSION." \
             "${flags[@]}" \
