@@ -240,6 +240,8 @@ The welcome window follows system appearance with the design’s Platform light/
 <a id="local-macos-dmg-without-release-signing"></a>
 <a id="local-official-bundles-from-a-loopback-registry"></a>
 
+Build a local [Linux x86_64 packages](packaging/README.md#linux-x64-appimage).
+
 Use the dedicated guides for build and release operations. Shared Windows runners have accepted credential and device isolation limits; read them before signing or executing branch code.
 
 - [Desktop packaging](packaging/README.md): local and Actions builds, versions, deployment settings, artifacts, logs and verification.

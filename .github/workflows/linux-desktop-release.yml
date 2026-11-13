@@ -1,0 +1,105 @@
+name: Linux Desktop release
+
+on:
+  push:
+    tags: ['linux-desktop-v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-desktop-release-${{ github.ref }}
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    env:
+      DSH_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v5.0.0
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '24.21.0'
+          cache: pnpm
+
+      - name: Verify tag matches the package version
+        id: version
+        run: |
+          version=$(node -p 'require("./apps/desktop/package.json").version')
+          test "$GITHUB_REF_NAME" = "linux-desktop-v$version"
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential musl-tools libatomic1 libgtk-3-0t64 libnss3 libgbm1 libasound2t64
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build and smoke-test both packages
+        run: pnpm run package:desktop:linux:x64
+
+      - name: Verify the Debian install and AppImage contents
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          packages="$PWD/apps/desktop/.desktop-build/targets/linux-x64/unsigned-artifacts"
+          deb="$packages/deepseek-harness-$VERSION-linux-amd64-unsigned.deb"
+          image="$packages/deepseek-harness-$VERSION-linux-x86_64-unsigned.AppImage"
+          test "$(dpkg-deb --field "$deb" Package)" = deepseek-harness
+          test "$(dpkg-deb --field "$deb" Architecture)" = amd64
+          scratch=$(mktemp -d)
+          trap 'rm -rf "$scratch"' EXIT
+          export DSH_HOME="$scratch/dsh-home"
+          sudo apt-get install -y --no-install-recommends "$deb"
+          test "$(readlink -f "$(command -v deepseek-harness)")" = '/opt/DeepSeek Harness/deepseek-harness'
+          test "$('/opt/DeepSeek Harness/resources/runtime/cli/bin/dsh' --version)" = "$VERSION"
+
+          cd "$scratch"
+          "$image" --appimage-extract > /dev/null
+          test "$(squashfs-root/resources/runtime/cli/bin/dsh --version)" = "$VERSION"
+
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: linux-desktop
+          path: |
+            apps/desktop/.desktop-build/targets/linux-x64/unsigned-artifacts/deepseek-harness-${{ steps.version.outputs.version }}-linux-x86_64-unsigned.AppImage
+            apps/desktop/.desktop-build/targets/linux-x64/unsigned-artifacts/deepseek-harness-${{ steps.version.outputs.version }}-linux-amd64-unsigned.deb
+          if-no-files-found: error
+          compression-level: 0
+
+  publish:
+    needs: package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8.0.1
+        with:
+          name: linux-desktop
+          path: release-assets
+
+      - name: Publish verified packages to GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.package.outputs.version }}
+        run: |
+          flags=()
+          if [[ "$VERSION" == *-* ]]; then
+            flags+=(--prerelease)
+          fi
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag \
+            --title "DeepSeek Harness Desktop $VERSION for Linux" \
+            --notes "Unsigned Linux x86_64 desktop packages for DeepSeek Harness $VERSION." \
+            "${flags[@]}" \
+            "release-assets/deepseek-harness-$VERSION-linux-x86_64-unsigned.AppImage" \
+            "release-assets/deepseek-harness-$VERSION-linux-amd64-unsigned.deb"

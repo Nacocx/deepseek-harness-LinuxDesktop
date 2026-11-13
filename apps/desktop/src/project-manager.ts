@@ -129,15 +129,22 @@ export class DesktopProjectManager {
   }
 }
 
-/** Create build-only project metadata for materializing the signed runtime. */
-export function createRuntimeProjectMetadata(projectDir: string, release: DesktopRelease): void {
+/**
+ * Write the package manifest and pnpm settings for materializing a Desktop runtime.
+ * @param projectDir - Temporary runtime project containing the sealed local package set.
+ * @param release - Release identity expected by the local package set.
+ * @param dependencies - Additional runtime dependencies required by the target.
+ */
+export function createRuntimeProjectMetadata(
+  projectDir: string, release: DesktopRelease, dependencies: Readonly<Record<string, string>> = {},
+): void {
   mkdirSync(projectDir, { recursive: true, mode: 0o700 })
   const packageSet = verifyDesktopCorePackageSet(projectDir, release.version)
   const manifest = {
     name: PROJECT_NAME,
     private: true,
     version: '0.0.0',
-    dependencies: desktopCorePackageOverrides(packageSet),
+    dependencies: { ...dependencies, ...desktopCorePackageOverrides(packageSet) },
     dsh: { profile: { bundles: [...WEB_PROFILE.bundles] } },
   }
   writeJson(join(projectDir, 'package.json'), manifest)

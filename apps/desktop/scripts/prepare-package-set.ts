@@ -70,7 +70,7 @@ function dependencyNames(manifest: Readonly<Record<string, unknown>>, section: s
  */
 export function selectDesktopPackageClosure(
   available: ReadonlyMap<string, PackedDesktopPackage>,
-  target: ReturnType<typeof desktopTargetPlatform>,
+  target: { platform: NodeJS.Platform; arch: string },
 ): PackedDesktopPackage[] {
   const workspace = yaml.load(readFileSync(join(REPOSITORY_ROOT, 'pnpm-workspace.yaml'), 'utf8')) as { packages: string[] }
   const workspaceNames = new Set(globSync(workspace.packages.map(pattern => `${pattern}/package.json`), { cwd: REPOSITORY_ROOT })
@@ -149,7 +149,7 @@ export function assertDesktopHostPackageFiles(files: readonly string[]): void {
  * @param target - Platform and architecture of the installer payload.
  */
 export function prepareDesktopPackageSet(
-  inputs: readonly string[], output: string, target: ReturnType<typeof desktopTargetPlatform>,
+  inputs: readonly string[], output: string, target: { platform: NodeJS.Platform; arch: string },
 ): void {
   const selected = selectDesktopPackageClosure(packedPackages(inputs), target)
   const host = selected.find(packed => packed.manifest.name === DESKTOP_HOST_PACKAGE)

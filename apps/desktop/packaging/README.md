@@ -13,6 +13,7 @@ Build Desktop installers locally or through Windows or macOS Actions, choose dep
 ## Table of Contents
 
 - [Choose a build path](#choose-a-build)
+- [Linux x86_64 packages](#linux-x64-appimage)
 - [Release versions](#release-versions)
 - [Configuration and local builds](#configuration-and-local-builds)
 - [Windows Actions packaging](#windows-actions)
@@ -34,11 +35,23 @@ Run local commands from the repository root after installing locked dependencies
 
 Set `DSH_DESKTOP_PACKAGE_CACHE_DIR` to an absolute build-cache directory for reuse across checkouts; see [cache configuration and lifecycle](#desktop-runtime-preparation).
 
+<a id="linux-x64-appimage"></a>
+
+## Linux x86_64 packages
+
+On a glibc Linux x86_64 build host, use Node.js with its development headers, a C compiler, and `musl-gcc`. After installing the locked workspace dependencies, run the command below from the repository root. It creates unsigned AppImage and Debian packages with bundled runtimes in `apps/desktop/.desktop-build/targets/linux-x64/unsigned-artifacts/`. This build uses manual updates and bundles the WebAssembly engines for image processing and Office conversion.
+
+```sh
+pnpm run package:desktop:linux:x64
+```
+
+On Debian or Ubuntu, install the `.deb` with `sudo apt install ./<package>.deb`. To publish both formats on GitHub, push a tag named `linux-desktop-v<version>` whose version matches `apps/desktop/package.json`. The [Linux Desktop release workflow](../../../.github/workflows/linux-desktop-release.yml) checks both packages and publishes them to the tag’s GitHub Release.
+
 <a id="release-versions"></a>
 
 ## Release versions
 
-Before each Desktop packaging run, first confirm the complete version string with the current user. Check the selected deployment, dsh base version, retained release records, and published objects, then propose the exact version for approval. Do not start packaging until the user confirms that version; the deployment setting alone does not authorize a version choice.
+Before packaging for publication, first confirm the complete version string with the current user. Check the selected deployment, dsh base version, retained release records, and published objects, then propose the exact version for approval. Do not start packaging until the user confirms that version; the deployment setting alone does not authorize a version choice.
 
 Record the current dsh version as the base. A production Desktop release uses that exact version, including any `alpha`, `beta`, or `rc` identifiers. A test release preserves the complete prerelease base and appends `.YYYYMMDD.index`; a stable base uses `-test.YYYYMMDD.index` instead.
 

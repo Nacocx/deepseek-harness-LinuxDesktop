@@ -1,0 +1,36 @@
+diff --git a/dist/sharp.cjs b/dist/sharp.cjs
+--- a/dist/sharp.cjs
++++ b/dist/sharp.cjs
+@@ -19,13 +19,8 @@
+ 
+ /* node:coverage disable */
+ 
+-let sharp;
++let sharp = require("@img/sharp-wasm32/sharp.node");
+ const errors = [];
+-try {
+-  sharp = require(`../src/build/Release/sharp-${runtimePlatform}-${version}.node`);
+-} catch (err) {
+-  errors.push(err);
+-}
+ if (!sharp) {
+   try {
+     sharp = require(`../src/build/Release/sharp-wasm32-${version}.node`);
+diff --git a/dist/sharp.mjs b/dist/sharp.mjs
+--- a/dist/sharp.mjs
++++ b/dist/sharp.mjs
+@@ -19,13 +19,8 @@
+ 
+ /* node:coverage disable */
+ 
+-let sharp;
++let sharp = require("@img/sharp-wasm32/sharp.node");
+ const errors = [];
+-try {
+-  sharp = require(`../src/build/Release/sharp-${runtimePlatform}-${version}.node`);
+-} catch (err) {
+-  errors.push(err);
+-}
+ if (!sharp) {
+   try {
+     sharp = require(`../src/build/Release/sharp-wasm32-${version}.node`);

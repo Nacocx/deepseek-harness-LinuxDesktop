@@ -24,6 +24,9 @@ export function desktopRuntimeFileExclusion(
   const nameParts = packageParts[0]?.startsWith('@') ? 2 : 1
   const name = packageParts.slice(0, nameParts).join('/')
   const entry = packageParts.slice(nameParts).join('/')
+  if (target.platform === 'linux' && /^@img\/sharp-(?:libvips-)?linux-/u.test(name)) {
+    return 'native Sharp conflicts with Linux Electron'
+  }
   if (name.startsWith('@deepseek-ai/libreoffice-kit-')) {
     if (name !== `@deepseek-ai/libreoffice-kit-${officeEngine}`) return 'LibreOffice other platform'
   }

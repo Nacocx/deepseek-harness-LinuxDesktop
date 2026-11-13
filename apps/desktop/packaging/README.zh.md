@@ -13,6 +13,7 @@ description: "在本地或 Windows／macOS Actions 中生成 Desktop 安装包�
 ## 目录
 
 - [选择打包方式](#choose-a-build)
+- [Linux x86_64 安装包](#linux-x64-appimage)
 - [发布版本](#release-versions)
 - [配置与本地构建](#configuration-and-local-builds)
 - [Windows Actions 打包](#windows-actions)
@@ -34,11 +35,23 @@ description: "在本地或 Windows／macOS Actions 中生成 Desktop 安装包�
 
 将 `DSH_DESKTOP_PACKAGE_CACHE_DIR` 设为绝对构建缓存目录以跨 checkout 复用；详见[缓存配置与生命周期](#desktop-runtime-preparation)。
 
+<a id="linux-x64-appimage"></a>
+
+## Linux x86_64 安装包
+
+在使用 glibc 的 Linux x86_64 构建主机上，准备带开发头文件的 Node.js、C 编译器和 `musl-gcc`。安装工作区锁定的依赖后，从仓库根目录运行以下命令。带有内置运行时的未签名 AppImage 和 Debian 安装包位于 `apps/desktop/.desktop-build/targets/linux-x64/unsigned-artifacts/`。此构建使用手动更新，并内置用于图像处理和 Office 文档转换的 WebAssembly 引擎。
+
+```sh
+pnpm run package:desktop:linux:x64
+```
+
+在 Debian 或 Ubuntu 上，用 `sudo apt install ./<package>.deb` 安装 `.deb`。要在 GitHub 发布两种格式，推送与 `apps/desktop/package.json` 版本一致的 `linux-desktop-v<version>` 标签。[Linux Desktop 发布工作流](../../../.github/workflows/linux-desktop-release.yml)会检查两个安装包，并将它们上传到该标签的 GitHub Release。
+
 <a id="release-versions"></a>
 
 ## 发布版本
 
-每次 Desktop 打包前，第一步都要与当前用户确认完整版本号。检查所选部署环境、dsh 基础版本、保留的发布记录和已发布对象，再提出准确版本供用户确认。用户确认前不得启动打包；仅选择部署环境不代表用户已认可版本号。
+为发布打包前，先与当前用户确认完整版本号。检查所选部署环境、dsh 基础版本、保留的发布记录和已发布对象，再提出准确版本供用户确认。用户确认前不得启动打包；仅选择部署环境不代表用户已认可版本号。
 
 记录当前 dsh 版本作为基础版本。production Desktop 使用完全相同的版本，包括其中的 `alpha`、`beta` 或 `rc` 标识。test 发布保留完整的预发布基础版本并追加 `.YYYYMMDD.index`；稳定基础版本则追加 `-test.YYYYMMDD.index`。
 

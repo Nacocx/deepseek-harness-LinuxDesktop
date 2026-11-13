@@ -2,7 +2,7 @@
 
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { accessSync, constants, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { rm } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
@@ -109,6 +109,7 @@ function checkKoffi() {
 /** Encode and decode a pixel through the packaged libvips binary. */
 async function checkSharp() {
   const sharp = requireRuntime('sharp')
+  if (process.platform === 'linux') assert.ok(sharp.versions.emscripten, 'Linux Electron must use Sharp WebAssembly')
   const pixel = Buffer.from([17, 103, 231])
   const png = await sharp(pixel, { raw: { width: 1, height: 1, channels: 3 } }).png().toBuffer()
   const decoded = await sharp(png).raw().toBuffer({ resolveWithObject: true })
@@ -145,6 +146,12 @@ try {
   checkHtml()
   console.error('runtime payload: pty')
   await checkPty()
+  if (process.platform === 'linux') {
+    const { launcherPath } = await import(pathToFileURL(requireRuntime.resolve('@deepseek-ai/node-addon-system/landlock-run')).href)
+    const launcher = launcherPath()
+    assert.ok(!launcher.includes('.asar/'))
+    accessSync(launcher, constants.X_OK)
+  }
   console.error('runtime payload: search')
   await checkSearch()
   console.error('runtime payload: checks complete; awaiting process exit')

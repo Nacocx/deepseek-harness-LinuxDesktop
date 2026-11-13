@@ -8,6 +8,13 @@
 export function localMacOSPackageEnvironment(environment?: NodeJS.ProcessEnv): NodeJS.ProcessEnv
 
 /**
+ * Select unsigned local packaging defaults without inheriting release credentials.
+ * @param environment Parent build environment.
+ * @returns Local packaging environment.
+ */
+export function localDesktopPackageEnvironment(environment?: NodeJS.ProcessEnv): NodeJS.ProcessEnv
+
+/**
  * Read a machine preset when selected, otherwise the target's required dotenv; no ambient release fallback.
  * PACKAGE_TEST_RELEASE_ID overrides the test preset only; blank retains its configured ID.
  * PACKAGE_MACOS_ZIP_COMPRESSION_LEVEL overrides the Mac file setting with 3 or 7; an empty value is invalid.
@@ -35,6 +42,6 @@ export function loadDesktopPackageEnvironment(
  */
 export function validateDesktopPackageEnvironment(
   environment: NodeJS.ProcessEnv,
-  target: { platform: 'win32' | 'darwin', arch: string },
+  target: { platform: 'win32' | 'darwin' | 'linux', arch: string },
   options?: { unsigned?: boolean, prepareOnly?: boolean, skipNotarization?: boolean },
 ): void

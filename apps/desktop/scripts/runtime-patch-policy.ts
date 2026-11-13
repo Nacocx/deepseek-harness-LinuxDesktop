@@ -27,3 +27,21 @@ export const DESKTOP_RUNTIME_DEPENDENCY_OVERRIDES: Readonly<Record<string, strin
   // The provider declares ^1.3.0; its patch is qualified against 1.3.0.
   '@earendil-works/pi-ai@^1.3.0': '1.3.0',
 }
+
+/** Sharp's packaged WebAssembly backend avoids GLib symbol conflicts with Linux Electron. */
+export const LINUX_DESKTOP_SHARP_DEPENDENCIES = { '@img/sharp-wasm32': '0.35.5' }
+
+/** Linux Desktop uses the packaged WebAssembly engines for image and Office operations. */
+export const LINUX_DESKTOP_RUNTIME_PATCHES: Readonly<Record<string, DesktopRuntimePatch>> = {
+  ...DESKTOP_RUNTIME_PATCHES,
+  '@deepseek-ai/libreoffice-kit@0.2.3': {
+    scope: 'runtime-only',
+    path: 'apps/desktop/packaging/libreoffice-linux-electron.patch',
+    reason: 'The Linux Desktop payload ships the WebAssembly engine.',
+  },
+  'sharp@0.35.5': {
+    scope: 'runtime-only',
+    path: 'apps/desktop/packaging/sharp-linux-electron.patch',
+    reason: 'Electron loads system GLib into the same process as Sharp.',
+  },
+}

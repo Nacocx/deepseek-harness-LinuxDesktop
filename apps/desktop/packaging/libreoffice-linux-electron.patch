@@ -1,0 +1,12 @@
+diff --git a/lib/index.js b/lib/index.js
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -1635,7 +1635,7 @@
+ */
+ async function resolveEngine(resolvePackage = installedEnginePackage, packageExists = resolvePackage === installedEnginePackage ? installedPackageExists : () => false, { platform = process.platform, arch = process.arch, report = hostReport } = {}) {
+ 	const details = platform === "linux" ? report() : {};
+-	const target = platformTarget(platform, arch, () => details);
++	const target = platform === "linux" ? void 0 : platformTarget(platform, arch, () => details);
+ 	if (target !== void 0) {
+ 		const name = `${ENGINE_PREFIX}-${target}`;
+ 		let packageFile;

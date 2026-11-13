@@ -59,8 +59,8 @@ export interface LauncherGrants {
  * skipped the optional dependency — the returned fallback path points inside
  * this package's own `node_modules` and simply never exists. Existence is
  * deliberately not checked either way: {@link probe} is the single
- * availability signal (a missing binary probes `unusable` the same way an
- * unenforcing kernel does).
+ * availability signal (a missing binary and an unenforcing kernel both
+ * probe `unusable`). Electron uses the physical path beside its application archive.
  * @param resolvePackageJson - test hook over `require.resolve` (the default
  *   covers real installs); receives the platform package's `package.json`
  *   specifier and returns its absolute path, throwing when unresolvable.
@@ -71,7 +71,10 @@ export function launcherPath(
 ): string {
   const platformPackage = `@deepseek-ai/node-addon-system-${process.platform}-${process.arch}`
   try {
-    return join(dirname(resolvePackageJson(`${platformPackage}/package.json`)), 'bin', LAUNCHER_BIN)
+    const manifest = resolvePackageJson(`${platformPackage}/package.json`)
+    const directory = process.versions.electron === undefined ? dirname(manifest)
+      : dirname(manifest.replace(/\.asar(?=[\\/])/u, '.asar.unpacked'))
+    return join(directory, 'bin', LAUNCHER_BIN)
   } catch {
     // Unresolvable platform package: no such package exists for this host, or
     // it was not installed. Fall back to the path pnpm's layout WOULD use —
